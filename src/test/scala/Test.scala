@@ -57,8 +57,12 @@ class ParserTest:
     assertParsedEquals(
       "(ab)|(cd)",
       Or(
-        Group(Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b')))),
-        Group(Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d'))))
+        Group(
+          Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b')))
+        ),
+        Group(
+          Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d')))
+        )
       )
     )
 
@@ -74,8 +78,30 @@ class ParserTest:
   @Test def groupedOrSequences(): Unit =
     assertParsedEquals(
       "(ab|cd)",
-      Group(Or(
-        Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b'))),
-        Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d')))
-      ))
+      Group(
+        Or(
+          Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b'))),
+          Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d')))
+        )
+      )
+    )
+
+  @Test def zeroOrMore(): Unit =
+    assertParsedEquals(
+      "a*",
+      ZeroOrMore(NonSpecialChar('a'))
+    )
+
+  @Test def zeroOrMoreSequence(): Unit =
+    assertParsedEquals(
+      "ab*",
+      Sequence(
+        NonEmptyList.of(NonSpecialChar('a'), ZeroOrMore(NonSpecialChar('b')))
+      )
+    )
+
+  @Test def zeroOrMoreSequenceWithAny(): Unit =
+    assertParsedEquals(
+      "a.*",
+      Sequence(NonEmptyList.of(NonSpecialChar('a'), ZeroOrMore(AnyChar())))
     )
