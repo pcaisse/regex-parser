@@ -53,6 +53,15 @@ class ParserTest:
       Or(Group(NonSpecialChar('a')), Group(NonSpecialChar('b')))
     )
 
+  @Test def orGroupsOfSequenced(): Unit =
+    assertParsedEquals(
+      "(ab)|(cd)",
+      Or(
+        Group(Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b')))),
+        Group(Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d'))))
+      )
+    )
+
   @Test def orSequences(): Unit =
     assertParsedEquals(
       "ab|cd",
@@ -60,4 +69,13 @@ class ParserTest:
         Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b'))),
         Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d')))
       )
+    )
+
+  @Test def groupedOrSequences(): Unit =
+    assertParsedEquals(
+      "(ab|cd)",
+      Group(Or(
+        Sequence(NonEmptyList.of(NonSpecialChar('a'), NonSpecialChar('b'))),
+        Sequence(NonEmptyList.of(NonSpecialChar('c'), NonSpecialChar('d')))
+      ))
     )
