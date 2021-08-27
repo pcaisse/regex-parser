@@ -19,9 +19,11 @@ object Parser {
         group :: anyChar :: nonSpecialChar :: Nil
       )
     val sequence = individualRegExps.rep(2).map(Sequence(_)).backtrack
+    val individualOrSequence =
+      P.oneOf[Group | AnyChar | NonSpecialChar | Sequence](sequence :: individualRegExps :: Nil)
     val or =
-      ((individualRegExps <* pipe) ~ individualRegExps).map(Or(_, _)).backtrack
-    P.oneOf(sequence :: or :: individualRegExps :: Nil)
+      ((individualOrSequence <* pipe) ~ individualOrSequence).map(Or(_, _)).backtrack
+    P.oneOf(or :: sequence :: individualRegExps :: Nil)
   }
 
   val parse = parser.parse
