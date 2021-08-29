@@ -1,23 +1,30 @@
 import cats.parse.{Parser => P}
-import cats.parse.Rfc5234.{alpha, digit}
 import cats.data.NonEmptyList
 
 object Parser {
 
-  val leftParen = P.char('(')
-  val rightParen = P.char(')')
-  val period = P.char('.')
-  val pipe = P.char('|')
-  val star = P.char('*')
+  enum SpecialChar(val char: Char):
+    case LeftParen extends SpecialChar('(')
+    case RightParen extends SpecialChar(')')
+    case Period extends SpecialChar('.')
+    case Pipe extends SpecialChar('|')
+    case Star extends SpecialChar('*')
 
   private val parser = P.recursive[RegExp] { recurse =>
     val group =
-      recurse.between(leftParen, rightParen).map(Group(_))
-    val nonSpecialChar = (alpha | digit).map(NonSpecialChar(_))
-    val anyChar = period.map(_ => AnyChar())
+      recurse
+        .between(
+          P.char(SpecialChar.LeftParen.char),
+          P.char(SpecialChar.RightParen.char)
+        )
+        .map(Group(_))
+    val nonSpecialChar =
+      P.charWhere { char => !SpecialChar.values.map(_.char).contains(char) }
+        .map(NonSpecialChar(_))
+    val anyChar = P.char(SpecialChar.Period.char).map(_ => AnyChar())
     val zeroOrMore = (P.oneOf[Group | AnyChar | NonSpecialChar](
       group :: anyChar :: nonSpecialChar :: Nil
-    ) <* star).map(ZeroOrMore(_)).backtrack
+    ) <* P.char(SpecialChar.Star.char)).map(ZeroOrMore(_)).backtrack
     val individualRegExps =
       P.oneOf[ZeroOrMore | Group | AnyChar | NonSpecialChar](
         zeroOrMore :: group :: anyChar :: nonSpecialChar :: Nil
@@ -28,7 +35,9 @@ object Parser {
         sequence :: individualRegExps :: Nil
       )
     val or =
-      ((individualOrSequence <* pipe) ~ individualOrSequence)
+      ((individualOrSequence <* P.char(
+        SpecialChar.Pipe.char
+      )) ~ individualOrSequence)
         .map(Or(_, _))
         .backtrack
     P.oneOf(or :: sequence :: individualRegExps :: Nil)
