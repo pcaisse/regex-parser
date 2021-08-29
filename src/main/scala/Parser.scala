@@ -22,13 +22,13 @@ object Parser {
       P.charWhere { char => !SpecialChar.values.map(_.char).contains(char) }
         .map(NonSpecialChar(_))
     val anyChar = P.char(SpecialChar.Period.char).map(_ => AnyChar())
-    val zeroOrMore = (P.oneOf[Group | AnyChar | NonSpecialChar](
+    val individualRegExps = (P.oneOf[Group | AnyChar | NonSpecialChar](
       group :: anyChar :: nonSpecialChar :: Nil
-    ) <* P.char(SpecialChar.Star.char)).map(ZeroOrMore(_)).backtrack
-    val individualRegExps =
-      P.oneOf[ZeroOrMore | Group | AnyChar | NonSpecialChar](
-        zeroOrMore :: group :: anyChar :: nonSpecialChar :: Nil
-      )
+    ) ~ P.char(SpecialChar.Star.char).?)
+      .map[ZeroOrMore | Group | AnyChar | NonSpecialChar] {
+        case (regex, Some(_)) => ZeroOrMore(regex)
+        case (regex, None)    => regex
+      }
     val sequence = individualRegExps.rep(2).map(Sequence(_)).backtrack
     val individualOrSequence =
       P.oneOf[Sequence | ZeroOrMore | Group | AnyChar | NonSpecialChar](
