@@ -10,6 +10,13 @@ def assertParsedEquals(input: String, expectedOutput: RegExp) =
       assert(false, s"Parsing failed with errors: ${errors.toString}")
   }
 
+def assertParsingFails(input: String) =
+  Parser.parse(input) match {
+    case Right((_, actual)) =>
+      assert(false, s"Parsing did not fail on input $input and was $actual")
+    case Left(_) => assert(true)
+  }
+
 class ParserTest:
   @Test def nonSpecialChar(): Unit =
     assertParsedEquals("a", NonSpecialChar('a'))
@@ -105,3 +112,54 @@ class ParserTest:
       "a.*",
       Sequence(NonEmptyList.of(NonSpecialChar('a'), ZeroOrMore(AnyChar())))
     )
+
+  @Test def sequenceGroupedOr(): Unit =
+    assertParsedEquals(
+      "a(b|a)",
+      Sequence(
+        NonEmptyList.of(
+          NonSpecialChar('a'),
+          Group(Or(NonSpecialChar('b'), NonSpecialChar('a')))
+        )
+      )
+    )
+
+  @Test def orWithOptionalB(): Unit =
+    assertParsedEquals(
+      "a|b*",
+      Or(
+        NonSpecialChar('a'),
+        ZeroOrMore(NonSpecialChar('b'))
+      )
+    )
+
+  @Test def optionalOrdGroup(): Unit =
+    assertParsedEquals(
+      "(a|b)*",
+      ZeroOrMore(
+        Group(
+          Or(
+            NonSpecialChar('a'),
+            NonSpecialChar('b')
+          )
+        )
+      )
+    )
+
+  @Test def emptyStringFails(): Unit =
+    assertParsingFails("")
+
+  @Test def backwardsParensFail(): Unit =
+    assertParsingFails(")(")
+
+  @Test def starFails(): Unit =
+    assertParsingFails("*")
+
+  @Test def unclosedParenFails(): Unit =
+    assertParsingFails("(")
+
+  @Test def emptyGroupFails(): Unit =
+    assertParsingFails("()")
+
+  @Test def doubleStarFails(): Unit =
+    assertParsingFails("a**")
