@@ -12,8 +12,7 @@ final case class NonSpecialChar(char: Char) extends RegExp {
 final case class AnyChar() extends RegExp {
   def serialize = RegExp.SpecialChar.Period.char.toString
 }
-final case class ZeroOrMore(regex: Group | AnyChar | NonSpecialChar)
-    extends RegExp {
+final case class ZeroOrMore(regex: ZeroOrMoreRegExp) extends RegExp {
   def serialize = s"${regex.serialize}${RegExp.SpecialChar.Star.char}"
 }
 final case class Or(regexA: OrRegExp, regexB: OrRegExp) extends RegExp {
@@ -21,7 +20,7 @@ final case class Or(regexA: OrRegExp, regexB: OrRegExp) extends RegExp {
     s"${regexA.serialize}${RegExp.SpecialChar.Pipe.char.toString}${regexB.serialize}"
 }
 final case class Sequence(
-    regexes: NonEmptyList[ZeroOrMore | Group | AnyChar | NonSpecialChar]
+    regexes: NonEmptyList[SequenceRegExp]
 ) extends RegExp {
   def serialize = Monoid.combineAll(regexes.map(_.serialize).toList)
 }
@@ -30,6 +29,8 @@ final case class Group(regex: RegExp) extends RegExp {
     s"${RegExp.SpecialChar.LeftParen.char}${regex.serialize}${RegExp.SpecialChar.RightParen.char}"
 }
 
+type ZeroOrMoreRegExp = Group | AnyChar | NonSpecialChar
+type SequenceRegExp = ZeroOrMore | Group | AnyChar | NonSpecialChar
 type OrRegExp = Sequence | ZeroOrMore | Group | AnyChar | NonSpecialChar
 
 object RegExp {
