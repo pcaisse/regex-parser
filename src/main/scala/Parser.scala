@@ -3,21 +3,14 @@ import cats.data.NonEmptyList
 
 object RegexParser {
 
-  private enum SpecialChar(val char: Char):
-    case LeftParen extends SpecialChar('(')
-    case RightParen extends SpecialChar(')')
-    case Period extends SpecialChar('.')
-    case Pipe extends SpecialChar('|')
-    case Star extends SpecialChar('*')
-
   /*
    * Regex group (regex surrounded by parentheses).
    */
   private def group(recurse: P[RegExp]): P[Group] =
     recurse
       .between(
-        P.char(SpecialChar.LeftParen.char),
-        P.char(SpecialChar.RightParen.char)
+        P.char(RegExp.SpecialChar.LeftParen.char),
+        P.char(RegExp.SpecialChar.RightParen.char)
       )
       .map(Group(_))
 
@@ -25,19 +18,20 @@ object RegexParser {
    * Any character that isn't one of the special ones.
    */
   private val nonSpecialChar: P[NonSpecialChar] =
-    P.charWhere { char => !SpecialChar.values.map(_.char).contains(char) }
-      .map(NonSpecialChar(_))
+    P.charWhere { char =>
+      !RegExp.SpecialChar.values.map(_.char).contains(char)
+    }.map(NonSpecialChar(_))
 
   /*
    * Period character (which means any).
    */
   private val anyChar: P[AnyChar] =
-    P.char(SpecialChar.Period.char).map(_ => AnyChar())
+    P.char(RegExp.SpecialChar.Period.char).map(_ => AnyChar())
 
   val parser = P.recursive[RegExp] { recurse =>
     val individualRegExps = (P.oneOf[Group | AnyChar | NonSpecialChar](
       group(recurse) :: anyChar :: nonSpecialChar :: Nil
-    ) ~ P.char(SpecialChar.Star.char).?)
+    ) ~ P.char(RegExp.SpecialChar.Star.char).?)
       .map[ZeroOrMore | Group | AnyChar | NonSpecialChar] {
         case (regex, Some(_)) =>
           // Found a star, so wrap in zero-or-more
@@ -51,7 +45,7 @@ object RegexParser {
       )
     val or =
       ((individualOrSequence <* P.char(
-        SpecialChar.Pipe.char
+        RegExp.SpecialChar.Pipe.char
       )) ~ individualOrSequence)
         .map(Or(_, _))
         .backtrack
