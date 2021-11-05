@@ -1,7 +1,7 @@
 import cats.parse.{Parser => P}
 import cats.data.NonEmptyList
 
-object Parser {
+object RegexParser {
 
   private enum SpecialChar(val char: Char):
     case LeftParen extends SpecialChar('(')
@@ -34,7 +34,7 @@ object Parser {
   private val anyChar: P[AnyChar] =
     P.char(SpecialChar.Period.char).map(_ => AnyChar())
 
-  private val parser = P.recursive[RegExp] { recurse =>
+  val parser = P.recursive[RegExp] { recurse =>
     val individualRegExps = (P.oneOf[Group | AnyChar | NonSpecialChar](
       group(recurse) :: anyChar :: nonSpecialChar :: Nil
     ) ~ P.char(SpecialChar.Star.char).?)
@@ -57,6 +57,4 @@ object Parser {
         .backtrack
     P.oneOf(or :: sequence :: individualRegExps :: Nil)
   }
-
-  val parse = parser.parse
 }

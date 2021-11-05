@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import cats.data.NonEmptyList
 
 def assertParsedEquals(input: String, expectedOutput: RegExp) =
-  Parser.parse(input) match {
+  RegexParser.parser.parse(input) match {
     case Right((_, actual)) =>
       assertEquals(expectedOutput, actual)
     case Left(errors) =>
@@ -11,7 +11,7 @@ def assertParsedEquals(input: String, expectedOutput: RegExp) =
   }
 
 def assertParsingFails(input: String) =
-  Parser.parse(input) match {
+  RegexParser.parser.parse(input) match {
     case Right((_, actual)) =>
       assert(false, s"Parsing did not fail on input $input and was $actual")
     case Left(_) => assert(true)
