@@ -70,8 +70,8 @@ class PropTest extends ScalaCheckSuite {
 
   property("regex") {
     forAll(Generators.genRegExp) { (regex: RegExp) =>
-      RegexParser.parser.parse(regex.serialize) match {
-        case Right((_, actual)) =>
+      RegexParser.parser.parseAll(regex.serialize) match {
+        case Right(actual) =>
           actual == regex
         case _ =>
           false
