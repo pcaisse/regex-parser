@@ -1,6 +1,5 @@
 import cats.data.NonEmptyList
 import cats.Monoid
-import cats.implicits._
 
 abstract sealed class RegExp {
   def serialize: String
